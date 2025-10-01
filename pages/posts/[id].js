@@ -1,12 +1,8 @@
 import { getGlobalData } from '../../utils/global-data';
-import {
-  getPostBySlug,
-} from '../../utils/mdx-utils';
+import { api } from '../../services/api';
 
-import { MDXRemote } from 'next-mdx-remote';
 import Head from 'next/head';
-import Link from 'next/link';
-import ArrowIcon from '../../components/ArrowIcon';
+
 import CustomLink from '../../components/CustomLink';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
@@ -60,14 +56,30 @@ export default function PostPage({
 
 export const getServerSideProps = async ({ params }) => {
   const globalData = getGlobalData();
-  const posts = await getPostBySlug(params.id);
- 
 
-  return {
-    props: {
-      globalData,
-      posts,
-    },
-  };
+  try {
+    const { data } = await api.get(`/posts?id=eq.${params.id}&select=*`);
+
+    if (!data || data.length === 0) {
+      return {
+        notFound: true,
+      };
+    }
+
+    const post = data[0];
+
+    return {
+      props: {
+        globalData,
+        posts: post,
+      },
+    };
+  } catch (error) {
+    console.error("Erro ao buscar post:", error.message);
+    return {
+      notFound: true,
+    };
+  }
 };
+
 
